@@ -35,10 +35,11 @@ try {
     $browsers = Join-Path $driver 'driver\package\.local-browsers'
 
     if ($SkipBrowser) {
-        # 必须移走，否则 collect_all 仍会把浏览器打进包（会导致"瘦身版"依旧 300+ MB）
+        # 必须移到包目录之外：留在 playwright 包内的话，collect_all('playwright')
+        # 仍会把它收进产物（只是换个名字），"瘦身版"会依旧 300+ MB。
         if (Test-Path $browsers) {
-            $stash = "$browsers.__stash"
-            Write-Host "==> 临时移出浏览器缓存以构建精简版" -ForegroundColor Cyan
+            $stash = Join-Path ([System.IO.Path]::GetTempPath()) ("autologin-browsers-" + [guid]::NewGuid().ToString('N'))
+            Write-Host "==> 临时移出浏览器缓存以构建精简版 -> $stash" -ForegroundColor Cyan
             Move-Item $browsers $stash -Force
         }
     }
