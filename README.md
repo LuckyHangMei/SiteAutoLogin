@@ -100,6 +100,33 @@ autologin --install  # 安装浏览器内核
 autologin --version  # 查看版本
 ```
 
+### 命令行执行（不开界面）
+
+适合交给 Windows 任务计划程序，或在服务器上定时跑：
+
+```powershell
+python run.py --run-all           # 执行全部启用站点；全部成功返回 0，有失败返回 1
+python run.py --run 名称 [名称…]   # 只执行指定站点（按名称或 id 匹配）
+```
+
+打包后的 `AutoLogin.exe` 同样支持这些参数：
+
+```powershell
+AutoLogin.exe --run-all
+```
+
+### 直接下载现成程序（无需 Python）
+
+在仓库的 [Releases](../../releases) 页面下载对应压缩包，解压后双击 `AutoLogin.exe`：
+
+| 包 | 大小 | 适用 |
+| --- | --- | --- |
+| `AutoLogin-<版本>-win64.zip` | 约 350 MB | **完全离线**：内置 Chromium，目标机器无需 Python、无需任何浏览器 |
+| `AutoLogin-<版本>-win64-slim.zip` | 约 50 MB | 目标机器已装 Edge / Chrome 时使用，程序会自动回退到系统浏览器 |
+
+解压目录可放在任意位置（含 U 盘）；`sites.json`、会话与日志都生成在 `AutoLogin.exe` 同级，
+整个文件夹拷走即完成迁移。压缩包的 SHA-256 见同一 Release 的 `SHA256SUMS.txt`。
+
 ---
 
 ## 使用
@@ -161,11 +188,24 @@ autologin --version  # 查看版本
 
 ```powershell
 pip install -r requirements-dev.txt
+
+# 推荐：一键构建（内置 Chromium，产物 release/AutoLogin-<版本>-win64.zip）
+pwsh scripts/build_release.ps1
+
+# 不内置浏览器（依赖目标机的 Edge / Chrome，约 50 MB）
+pwsh scripts/build_release.ps1 -SkipBrowser -Suffix -slim
+
+# 只打包不压缩
 pyinstaller --clean --noconfirm packaging/AutoLogin.spec
 ```
 
-产物在 `dist/AutoLogin/`（onedir 模式）。打包后 `sites.json`、`session_*.json`、
-`holidays.json`、`auto_login.log` 都生成在 `AutoLogin.exe` 同级目录，便于整体拷贝分发。
+产物在 `dist/AutoLogin/`（onedir 模式），压缩包在 `release/`。打包后 `sites.json`、
+`session_*.json`、`holidays.json`、`auto_login.log` 都生成在 `AutoLogin.exe` 同级目录，
+便于整体拷贝分发。
+
+构建脚本会把本机 `%LOCALAPPDATA%\ms-playwright` 下的 Chromium 复制进
+`playwright/driver/package/.local-browsers`，PyInstaller 通过 `collect_all('playwright')`
+一并打包，因此完整版在离线机器上也能直接运行。
 
 ---
 

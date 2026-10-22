@@ -1,9 +1,11 @@
 """Windows 单实例锁；进程结束时由系统释放，不依赖锁文件。"""
 import ctypes
 from ctypes import wintypes as wt
+import os
 
 
-MUTEX_NAME = r"Local\AutoLogin.SingleInstance"
+# 默认全局唯一；AUTOLOGIN_MUTEX_NAME 可覆盖，用于同机并行跑多套实例（测试/多配置）。
+MUTEX_NAME = os.environ.get("AUTOLOGIN_MUTEX_NAME") or r"Local\AutoLogin.SingleInstance"
 WINDOW_CLASS = "AutoLoginTrayWindow"
 kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
 user32 = ctypes.WinDLL("user32", use_last_error=True)
