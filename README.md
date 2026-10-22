@@ -205,7 +205,26 @@ pyinstaller --clean --noconfirm packaging/AutoLogin.spec
 
 构建脚本会把本机 `%LOCALAPPDATA%\ms-playwright` 下的 Chromium 复制进
 `playwright/driver/package/.local-browsers`，PyInstaller 通过 `collect_all('playwright')`
-一并打包，因此完整版在离线机器上也能直接运行。
+一并打包，因此完整版在离线机器上也能直接运行。精简版构建时会临时把该目录移开，
+避免浏览器被误打进包里。
+
+### 自动发布
+
+`.github/workflows/release.yml` 在推送 `v*` 标签时自动完成：跑测试与敏感信息扫描 →
+构建完整版与精简版 → 生成 `SHA256SUMS.txt` → 创建 Release 并上传全部资产。
+在 Actions 页面手动触发（`workflow_dispatch`）则只构建、留存为 artifact，不发布。
+
+发版步骤：
+
+```powershell
+# 1. 同步修改两处版本号
+#    src/autologin/__init__.py  ->  __version__
+#    pyproject.toml             ->  project.version
+
+git commit -am "chore: 发布 v2.1.0"
+git tag v2.1.0
+git push origin main --tags
+```
 
 ---
 

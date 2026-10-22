@@ -1,0 +1,102 @@
+name: release
+
+# 打 tag（v*）自动构建并发布；也可在 Actions 页面手动触发，仅产出构建件不发布。
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  PYTHONIOENCODING: utf-8
+  PYTHONPATH: src
+
+jobs:
+  test:
+    name: 测试与自检
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+          cache: pip
+          cache-dependency-path: requirements*.txt
+
+      - name: 安装依赖
+        run: pip install -r requirements.txt
+
+      - name: 单元测试（不依赖桌面会话）
+        run: python -m unittest tests.test_holiday tests.test_login_runner -v
+
+      - name: 敏感信息扫描
+        run: python scripts/check_sensitive.py
+
+      - name: 界面测试（需要桌面会话，失败不阻塞发布）
+        continue-on-error: true
+        run: python -m unittest tests.test_gui_password tests.test_auto_refresh tests.test_tray -v
+
+  build:
+    name: 构建便携包
+    needs: test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+          cache: pip
+          cache-dependency-path: requirements*.txt
+
+      - name: 安装依赖
+        run: pip install -r requirements-dev.txt
+
+      - name: 缓存 Chromium
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.LOCALAPPDATA }}\ms-playwright
+          key: playwright-chromium-${{ hashFiles('requirements.txt') }}
+
+      - name: 安装 Chromium
+        run: python -m playwright install chromium
+
+      - name: 构建完整版（内置 Chromium）
+        run: pwsh -NoProfile -File scripts/build_release.ps1
+
+      - name: 构建精简版（复用系统浏览器）
+        run: pwsh -NoProfile -File scripts/build_release.ps1 -SkipBrowser -Suffix -slim
+
+      - name: 生成校验和
+        run: |
+          Get-ChildItem release/*.zip |
+            ForEach-Object { "$((Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower())  $($_.Name)" } |
+            Set-Content -Path release/SHA256SUMS.txt -Encoding ascii
+          Get-Content release/SHA256SUMS.txt
+
+      - name: 留存构建件（手动触发时也能下载）
+        uses: actions/upload-artifact@v4
+        with:
+          name: AutoLogin-win64-${{ github.sha }}
+          path: |
+            release/*.zip
+            release/SHA256SUMS.txt
+          retention-days: 14
+
+      - name: 发布 Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release/*.zip
+            release/SHA256SUMS.txt
+          generate_release_notes: true
+          fail_on_unmatched_files: true
