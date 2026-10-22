@@ -1,0 +1,13 @@
+AutoLogin icon: "Locked with key" (U+1F510), Twemoji 14.0.2.
+Twemoji graphics copyright Twitter, Inc. and other contributors.
+
+Source:
+https://github.com/twitter/twemoji/tree/v14.0.2
+https://raw.githubusercontent.com/twitter/twemoji/v14.0.2/assets/72x72/1f510.png
+
+License: Creative Commons Attribution 4.0 International (CC BY 4.0).
+https://creativecommons.org/licenses/by/4.0/
+Full license: TWEMOJI-LICENSE.txt, in this directory.
+
+Changes: resized the original PNG and converted it to a multi-resolution
+ICO containing 16, 20, 24, 32, 48 and 64 pixel images. Colors are unchanged.

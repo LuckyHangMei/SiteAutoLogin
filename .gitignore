@@ -1,0 +1,38 @@
+# 运行时数据（含账号密码与登录会话，切勿提交）
+sites.json
+session_*.json
+holidays.json
+auto_login.log
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.python-version
+*.egg-info/
+build/
+dist/
+.eggs/
+
+# 测试与类型检查缓存
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# 打包产物
+release/
+packaging/build/
+packaging/dist/
+
+# IDE / 系统
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
