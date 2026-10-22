@@ -54,6 +54,8 @@ Automatic_site_checkin/
 │       ├── single_instance.py 命名互斥量单实例锁
 │       └── assets/           应用图标与第三方素材许可
 ├── tests/                    单元 / 界面回归测试（unittest）
+├── scripts/
+│   └── check_sensitive.py    提交前敏感信息自检
 ├── packaging/
 │   └── AutoLogin.spec        PyInstaller 打包配置
 └── data/
@@ -201,8 +203,38 @@ python -m unittest tests.test_login_runner -v  # 单个模块
 
 - `sites.json` 中的密码是**明文**存储的（本地文件），请自行控制该目录的访问权限；
 - `session_*.json` 等同于登录凭据，泄露即可免密登录，切勿提交到仓库或分享；
-- 本仓库的 `.gitignore` 已排除上述文件，提交前请确认 `git status` 干净；
 - 建议为自动化单独设置一个专用账号，不要在公共电脑上保存凭据。
+
+### 哪些文件不会被提交
+
+`.gitignore` 已按类别屏蔽以下内容，`git status` 里不会出现它们：
+
+| 类别 | 规则示例 |
+| --- | --- |
+| 运行数据 | `sites.json`、`session_*.json`、`holidays.json`、`auto_login.log` |
+| 凭据与密钥 | `.env`、`credentials*`、`secrets*`、`*.pem`、`*.key`、`*.pfx`、`*.p12`、`*.token` |
+| 浏览器会话 | `playwright/.auth/`、`storage_state*.json`、`*.har` |
+| 备份副本 | `*.bak`、`*.orig`、`*.before`、`*.tmp`（旧配置副本常残留明文密码） |
+| 构建产物 | `build/`、`dist/`、`release/`、`packaging/build/`、`packaging/dist/` |
+
+### 提交前自检
+
+仓库自带一个不依赖第三方库的扫描脚本：
+
+```powershell
+python scripts/check_sensitive.py          # 扫描 Git 已跟踪文件
+python scripts/check_sensitive.py --all    # 连同未跟踪文件一起扫描
+```
+
+命中私钥块、云厂商令牌、真实内网 IP、真实邮箱、含用户名的绝对路径，
+或（在 `tests/`、`data/` 之外）硬编码的密码/令牌字面量时，脚本以退出码 1 结束。
+把它挂成 pre-commit 钩子即可在每次提交前自动拦截：
+
+```powershell
+"python scripts/check_sensitive.py" | Set-Content .git\hooks\pre-commit -Encoding ascii
+```
+
+> 扫描是启发式的，只能兜底常见疏漏，不能替代人工确认；首次推送前仍建议通读一遍 `git diff`。
 
 ---
 
