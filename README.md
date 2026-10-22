@@ -226,6 +226,14 @@ git tag v2.1.0
 git push origin main --tags
 ```
 
+流水线会先跑 `scripts/check_version.py`：代码内两处版本号必须一致，
+tag 名（去掉前缀 `v`）也必须与 `__version__` 相同，否则**在测试阶段直接失败**，
+不会产出文件名与 tag 对不上的包。本地可提前自查：
+
+```powershell
+python scripts/check_version.py --tag v2.1.0
+```
+
 ---
 
 ## 开发与测试

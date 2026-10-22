@@ -34,6 +34,13 @@ jobs:
       - name: 安装依赖
         run: pip install -r requirements.txt
 
+      - name: 版本一致性（代码内两处）
+        run: python scripts/check_version.py
+
+      - name: 版本一致性（tag 与代码）
+        if: startsWith(github.ref, 'refs/tags/')
+        run: python scripts/check_version.py --tag "${{ github.ref_name }}"
+
       - name: 单元测试（不依赖桌面会话）
         run: python -m unittest tests.test_holiday tests.test_login_runner -v
 
